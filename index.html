@@ -418,34 +418,35 @@ function fmt(val, dec) {
 }
 
 function calc() {
-  const V   = parseFloat(document.getElementById("tensao").value) || 0;
-  const Wm  = parseFloat(document.getElementById("potencia_m").value) || 0;
-  const m   = parseFloat(document.getElementById("metros").value) || 0;
+  const V   = parseFloat(document.getElementById("tensao").value);
+  const Wm  = parseFloat(document.getElementById("potencia_m").value);
+  const m   = parseFloat(document.getElementById("metros").value);
   const Vr  = parseFloat(document.getElementById("v_rede").value) || 0;
   const eff = (parseFloat(document.getElementById("eficiencia").value) || 80) / 100;
   const mod = parseFloat(document.getElementById("corr_modulo").value);
 
-  const pot_total   = Wm * m;
-  const corr_fita   = V > 0 ? pot_total / V : 0;
-  const pot_fonte   = pot_total * 1.2;
-  const corr_fonte  = V > 0 ? pot_fonte / V : 0;
-  const corr_in     = (Vr > 0 && eff > 0) ? pot_fonte / (Vr * eff) : 0;
-  const corr_in_marg = corr_in * 1.2;
+  const hasInputs = !isNaN(V) && !isNaN(Wm) && !isNaN(m);
 
-  document.getElementById("r_pot_total").innerHTML  = fmt(pot_total,1) + ' <span>W</span>';
-  document.getElementById("r_corr_fita").innerHTML  = fmt(corr_fita,3) + ' <span>A</span>';
-  document.getElementById("r_pot_fonte").innerHTML  = fmt(pot_fonte,1) + ' <span>W</span>';
-  document.getElementById("r_corr_fonte").innerHTML = fmt(corr_fonte,3) + ' <span>A</span>';
-  document.getElementById("r_corr_in").innerHTML    = fmt(corr_in,3) + ' <span>A</span>';
-  document.getElementById("r_corr_in_marg").innerHTML = fmt(corr_in_marg,3) + ' <span>A</span>';
+  const pot_total   = hasInputs ? Wm * m : null;
+  const corr_fita   = hasInputs && V > 0 ? pot_total / V : null;
+  const pot_fonte   = hasInputs ? pot_total * 1.2 : null;
+  const corr_fonte  = hasInputs && V > 0 ? pot_fonte / V : null;
+  const corr_in     = hasInputs && Vr > 0 && eff > 0 ? pot_fonte / (Vr * eff) : null;
+  const corr_in_marg = corr_in !== null ? corr_in * 1.2 : null;
 
-  // switch check
-  const box   = document.getElementById("switch_check");
+  const dash = '— <span></span>';
+  document.getElementById("r_pot_total").innerHTML  = pot_total   !== null ? fmt(pot_total,1)   + ' <span>W</span>' : dash;
+  document.getElementById("r_corr_fita").innerHTML  = corr_fita   !== null ? fmt(corr_fita,3)   + ' <span>A</span>' : dash;
+  document.getElementById("r_pot_fonte").innerHTML  = pot_fonte   !== null ? fmt(pot_fonte,1)   + ' <span>W</span>' : dash;
+  document.getElementById("r_corr_fonte").innerHTML = corr_fonte  !== null ? fmt(corr_fonte,3)  + ' <span>A</span>' : dash;
+  document.getElementById("r_corr_in").innerHTML    = corr_in     !== null ? fmt(corr_in,3)     + ' <span>A</span>' : dash;
+  document.getElementById("r_corr_in_marg").innerHTML = corr_in_marg !== null ? fmt(corr_in_marg,3) + ' <span>A</span>' : dash;
+
   const icon  = document.getElementById("check_icon");
   const title = document.getElementById("check_title");
   const msg   = document.getElementById("check_msg");
 
-  if(!isNaN(mod) && mod > 0) {
+  if(!isNaN(mod) && mod > 0 && corr_in_marg !== null) {
     if(mod >= corr_in_marg) {
       icon.textContent  = "✅";
       title.innerHTML   = '<span class="status-ok">Interruptor compatível!</span>';
@@ -477,7 +478,9 @@ calc();
 
   <script>
     if('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js');
+      });
     }
   </script>
 </body>
