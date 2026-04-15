@@ -1,4 +1,4 @@
-const CACHE_NAME = 'conexao-led-v4';
+const CACHE_NAME = 'conexao-led-v5';
 const FILES = [
   './index.html',
   './manifest.json',
